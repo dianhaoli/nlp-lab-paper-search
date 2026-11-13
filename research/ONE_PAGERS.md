@@ -11,7 +11,8 @@
 - **Order 0:** does an improver make better *task agents*?
 - **Order 1:** does an improver make better *improvers*? This is what "getting better at getting better" means.
 - **Nested replay:** the method from *Improvement by Inheritance* (ICLR 2027 submission ZMmJDeDTXk) for measuring order 1 cleanly. Fix the starting states, swap only the improver, and score whatever it produces on a common test bank.
-- **Background finding:** improvers almost never edit themselves (1–15% of generations). Their gains are mostly one good early edit that later generations inherit.
+- **Background finding:** improvers rarely edit themselves, and their gains are mostly one good early edit that later generations inherit (Improvement by Inheritance). Few papers measure self-edit rates at all: SelfImprove-Bench reports 0% retained improver changes unless the framing invites them, and then 20–45%.
+- **Verified Nov 13 (full text, `FULLTEXT_VERIFICATION.md`):** almost no published system rejects self-edits with a score. DGM, Hyperagents and HGM keep every valid child. STOP, RSIFlow, VERSE and MetaSkill-Evolve force self-edits. MetaRSI only runs syntax checks. Gödel Agent leaves it to the LLM. Only HMED scores an improver edit separately and can reject it.
 
 ## At a glance
 
@@ -65,6 +66,13 @@
 
 **Biggest risk.** Harness evolution may have too little real headroom to damage. The pilot gate requires ≥ 8 points of real gain.
 
+**After full-text check.**
+- Novelty holds: no paper crosses trace source with fitness source under errors.
+- The prior leans more toward *selected*. "Does Failure Feedback Direct Self-Modification?" finds DGM edits fix their targeted failure *less* often than other failures, and random selection reproduces DGM's trajectories. So frame the result as a measured teaching share, not a bet on "taught".
+- Drop CHASE as support.
+- Meta-Harness Table 3 (raw traces 56.7 vs scores only 41.3) is the precedent for the trace axis.
+- Ready-made error sources: BreakingWeb fabricated-success, CHASE Syn-Ledger shortcuts, HackProbe channels.
+
 ---
 
 ## 2. Forced-Quota Dose
@@ -105,7 +113,9 @@
 2. How much do framing ("you may edit improver.py"), the gate type, and the model family each explain?
 3. Of the self-edits that are kept, how many actually make better successors?
 
-**Core idea.** There are two explanations for the self-edit drought:
+**Reframe after full-text check.** Published systems mostly *don't* reject self-edits. They keep everything valid and just sample good parents more often, or they force edits. So "the gate throws them away" is not how most systems work. The question becomes: under each real gate type (none / contract check / task-score argmax / replay score as in HMED), where do self-edits die: never proposed, not propagated by selection, or kept but useless? No paper measures that funnel.
+
+**Core idea (original framing).** There are two explanations for the self-edit drought:
 - **willingness:** the model avoids touching its own code;
 - **gate:** a keep-if-better gate only sees the next task score, and a self-edit pays off later, so the gate rejects it.
 
@@ -206,6 +216,11 @@ Known data points: framing alone raises self-edits sharply (Improvement by Inher
 **Central claim.** Self-improvement skill is specialization, not general learning to learn.
 
 **Note.** This was "second-order plasticity" (meta-plasticity) in round 1, renamed and narrowed.
+
+**After full-text check, novelty is reduced.**
+- Hyperagents already reports *positive* far-ish transfer of an evolved meta agent (imp@50 = 0.630).
+- FreeEvolve already reports *negative* cross-environment transfer of evolved improver skills, carrying the procedure only.
+- What remains open: graded distance, a procedure × memory 2×2, multiple lineages, and reproducing both of those results in one setup.
 
 ---
 
