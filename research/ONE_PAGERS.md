@@ -323,3 +323,89 @@ Self-editing should only help for regime change.
 - **Week 1:** pilot #1.
 - **Weeks 1–2:** pilot #2. It also measures the natural self-edit rate and the cost of nested replay, which de-risks #3, #5 and #6.
 - **Around Nov 30:** decide which to pursue.
+
+---
+
+## 2+3 merged (strongest version): Where Recursive Self-Improvement Breaks: Propose, Propagate, Pay Off
+
+**Pitch.** Self-improving agents (Gödel Agent, DGM, Hyperagents) almost never actually improve *themselves*. Improvement by Inheritance shows that their gains come from one early edit that later generations inherit. For a self-improvement to matter, three things must happen:
+1. **Propose:** the meta-agent makes a self-edit.
+2. **Propagate:** selection keeps it and passes it on.
+3. **Pay off:** it makes later improvers better.
+
+We measure where this breaks across the designs people actually use, and test a fix.
+
+**RQs**
+1. At which stage does self-improvement fail under each real selection rule?
+   - keep all valid (DGM, Hyperagents)
+   - syntax check only (MetaRSI)
+   - best task score wins (SICA)
+   - replay-based meta gate (HMED)
+2. Does a *moderate* forced dose of self-edits plus a meta gate produce real improver-level (order-1) gains at matched compute?
+3. Do task-score rules work in coding only because task skill and improving skill overlap there, and fail outside coding?
+
+**Predicted weak stage by design**
+
+| Design | Weak stage |
+|---|---|
+| Natural (DGM, Hyperagents, Gödel Agent) | Propose: it rarely tries |
+| Forced every round (STOP, RSIFlow, VERSE) | Pay off: churn |
+| Best-score argmax (SICA) | Propagate: delayed payoff is invisible |
+| HMED | Little to gate |
+
+**Experiment.**
+- **Loop:** one Gödel-style loop with 6 arms:
+  - natural
+  - framing only
+  - 25% quota
+  - 100% quota
+  - 25% quota + replay meta gate
+  - placebo quota
+- **Grid:** 2 domains (coding + one non-coding) × 2 open model families × 5 seeds, at matched compute.
+- **Measurement:** track every self-edit through propose → propagate → pay off. Pay off is measured with nested replay at generations 0, 10 and 20.
+- **Cheap extra:** re-analyse the released DGM and Hyperagents histories with the same breakdown.
+
+**Pilot (~$60).** First replicate Improvement by Inheritance's +0.17 positive control on an open model, then measure the natural proposal rate. **Kill** if the positive control can't be detected.
+
+**What each result means**
+
+| Outcome | Paper |
+|---|---|
+| Quota + meta gate gives order-1 gains, and coding ≠ non-coding | Full claim: a framework, a fix, and an explanation of why DGM looks fine |
+| No order-1 gains anywhere, but the funnel locates the failure | Diagnosis paper |
+| Forcing alone works | Simpler recipe |
+
+**Builds on.**
+- Improvement by Inheritance: nested replay, the inheritance finding.
+- STOP, RSIFlow and MetaSkill-Evolve: forcing, always run once.
+- HMED: meta gate.
+- SICA, DGM, Hyperagents: selection rules.
+
+Nearly all of these are single runs, not compute-matched, and measured only at the task level.
+
+**Central claim.** Self-improving agents don't improve themselves because of a specific, measurable bottleneck. A moderate dose of forced self-editing plus a gate that sees delayed value fixes it.
+
+---
+
+## 10. Register Snowball (Xunjian's "Claudish" idea, revised)
+
+The full review is in `claudish/REVIEW.md`.
+
+**Status.**
+- RQ1 (all models do it) is mostly done by 2610.29162.
+- RQ4's coarse claim (post-training causes it) is covered by PASTA and others.
+- "Unreadable to humans, readable to models" is shown for engineered text by BabelTele.
+
+**Open:**
+- the *snowball*: does ordinary conversation amplify the register, with loop gain > 1?
+- the three breaking points (humans vs models vs tasks) on organically drifted text.
+
+**Fixes.**
+- Use a scripted uptake user, not a free LLM simulator.
+- Add a real-human arm.
+- Use cross-family model readers.
+- Run an OLMo base → SFT → DPO ladder.
+- Use LEDOM forward vs reverse bits per byte.
+- Name it "register snowball" rather than "Claudish".
+
+**Venue.** Better fit for EMNLP/COLM than NeurIPS. Est. P(accept at NeurIPS) is about 8%.
