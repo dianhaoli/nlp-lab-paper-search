@@ -1,0 +1,27 @@
+[
+ {
+  "title": "Embodied / physical-AI recursive self-improvement (robots, VLA agents)",
+  "seeds": "2610.12369 Embodied Turing Machines (NTU, 187 votes); 2610.18842 Who Improves the Robot? Physical RSI (SJTU/TUM); 2610.20474 AdaRSI (Northeastern/AgiBot); 2611.08318 Learning the Task or Learning the Verifier? criteria exposure in embodied self-improvement (PKU/NUS); 2610.08761 VeriFine (NVIDIA/UCLA/Berkeley/Stanford); 2611.13034 RoboACE; 2611.10510 ReSkill; 2611.18176 ESI flywheel; 2610.35051 VISTA; 2611.20655 MetaAct; 2610.38266 Physical-AI RSI survey (CASIA); 2610.rsi-agentic-robotics survey",
+  "why": "The atlas has only one survey card (Physical-AI RSI 2610.29677) and one embodied continual-learning benchmark (EmbodiedCLBench). The searches turned up more than 10 Oct-Nov 2026 papers on robot or VLA self-improvement, two of them additional surveys. They raise their own issues: verifier and criteria leakage in simulation benchmarks, stateful code as the robot policy, and a separate choice between harness-level and VLA-level fixes."
+ },
+ {
+  "title": "Multi-agent and social self-improvement (agents improving each other, collaborative RSI)",
+  "seeds": "2610.12176 RSI through Multi-Agent Self-Supervision (Berkeley, 193 votes); 2609.38516 From Solo to Social Learning: Recursive Social Improvement (UW); 2609.38662 CollabFlow: RSI of Agent Collaboration; 2610.24454 MELD hierarchical multi-agent RSI for science; 2611.20891 From Recursion to Convolution: parallel multi-agent self-improvement (Huawei); 2610.11345 SynCo multi-agent RL data-synthesis co-training; 2611.03868 EvoGroup self-evolving harness for group agents in shared contexts",
+  "why": "The meta-agent chapter covers multi-agent workflow search (MaAS, Illusion of Multi-Agent Advantage), and the atlas has a SwarmRSI card. No chapter treats agents supervising, teaching or co-improving each other as a mechanism of self-improvement, although 2026 has a distinct cluster on it: peer supervision for non-verifiable tasks, social learning dynamics, and improving collaboration protocols across tasks."
+ },
+ {
+  "title": "Label-free RL self-improvement: test-time RL (TTRL), self-rewarding and self-training of weights",
+  "seeds": "2504.16084 TTRL (3.2k votes); 2505.21444 Can Large Reasoning Models Self-Train? (CMU); 2609.36750 Group-Marginalized Self-Rewarding RL; 2610.32770 On-Policy Self-Training, data-free (Google, 84 votes); 2602.03094 Test-time Recursive Thinking (MSR); 2611.07367 Test-Time Self-Play without a verifier; 2603.19880 What If Consensus Lies?; 2604.21327 spurious signal amplification in TTRL; 2611.09872 reliability of majority-vote pseudo-labels; 2603.02203 Tool Verification for TTRL (framed as RSI); 2607.26873 SERPO open-ended TTRL; 2610.05303 ASCENT online test-time training for long-horizon agents",
+  "why": "The self-play chapter covers proposer-solver loops (Absolute Zero, R-Zero), and the harness-weights chapter covers co-evolution with harnesses. Neither covers the large TTRL and self-rewarding line, in which a single model updates its weights from its own consensus or judgments. That line has dozens of 2026 papers and its own failure analyses (consensus lock-in, spurious amplification), which would feed directly into the atlas's Goodhart and evaluation chapters."
+ },
+ {
+  "title": "Self-created tools and domain or multimodal self-evolving agents",
+  "seeds": "2602.21320 Tool-R0: self-evolving tool learning from zero data (UIUC/ETH, 83 votes); 2609.19664 VideoResearcher: self-improving tool design for long video (JHU); 2610.28282 ChartEvo self-evolving harnesses for chart reasoning; 2611.00053 SIMIT test-time self-improving VLMs via imagination; 2611.14256 Cross-Scenario Survey of Self-Evolving Multimodal Agents; 2610.18484 ReTerm recovery training for self-improving terminal agents",
+  "why": "Tools show up only as one part of a harness. No chapter covers agents that write, verify and reuse their own tools, or self-improvement outside text and code (video, charts, VLMs), where a 2026 survey already notes that each mechanism is designed and evaluated in a single scenario. A reader would get no picture of how well harness-RSI results carry over to other modalities."
+ },
+ {
+  "title": "Deployment-grounded RSI with human feedback and oversight (production, personal and team agents)",
+  "seeds": "2610.33624 RSI Arena: RSI with human feedback (Bake AI/Stanford/NVIDIA/HF/MIT et al.); 2610.38882 Aligning Autoresearch: Co-Improvement between Agents and Humans (FAIR, currently only a card in the research-agents chapter); 2611.02839 CARE grounded RSI for production customer-service agents (Meituan); 2611.06049 Reglos self-evolving personal memory agent; 2610.14118 ClawLoop harness-native training loop; 2611.23219 Do LLM Agents Still Need to Be Told How to Self-Improve? (MIT/T\u00fcbingen); 2606.22610 PaperClaw human-in-the-loop refinement",
+  "why": "Almost every chapter studies closed loops on benchmarks. Self-improvement driven by real user feedback, changing business policies and human co-improvement, with human oversight treated as a design variable rather than only a safety threat, is scattered: one card in the research-agents chapter and none elsewhere. Several Oct-Nov 2026 papers address it directly, and its success criteria (user preference, policy compliance) differ from the benchmark gains measured in the evaluation chapters."
+ }
+]

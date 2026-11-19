@@ -1,0 +1,100 @@
+## Glossary
+
+Each entry gives a plain-language definition and one representative paper id. Marks follow the atlas: † means the id or attribution comes from memory and was not re-checked this session. All other ids appear in the chapter text.
+
+- **Action-level self-reference.** The system improves itself by acting on its own scaffold Σ (code, prompts, tools) while the model weights θ stay fixed. The alternative is distributional self-reference, which changes θ. *2607.13104*
+- **AFlow suite.** The six-benchmark set GSM8K / MATH / HumanEval / MBPP / HotpotQA / DROP with GPT-4o-mini executors, which became the default testbed for workflow design. Several of its benchmarks are near ceiling, and numbers reported on it are not comparable across papers. *2410.10762*
+- **Anchor (ground-truth anchor).** A fixed set of items with known answers, used to decide whether a challenger evaluator may replace the incumbent. It keeps evaluator evolution honest, but it also caps how far the evaluator can improve. *2606.26294*
+- **Archive.** The stored population of all accepted agent variants, from which future parents are drawn. It keeps "stepping stones" that may score poorly now but lead to good descendants. *2505.22954*
+- **Argmax gate (keep-if-better).** An acceptance rule that keeps a candidate only if it beats the current best on a validation score. It is simple but vulnerable to noise and the winner's curse. *2504.15228*
+- **Architectural bloat.** Automatically designed multi-agent systems accumulating redundant agents or agents that collapse into the same function. It is a predicted side effect of rewarding the designer only on task score. *2606.13003*
+- **AUBC (area under the best-so-far curve).** A summary of best score over generations that rewards finding good variants early. It is not a measure of successor quality. *2610.13991*
+- **Baldwin effect.** The idea that what an individual learns during its lifetime can steer which inherited traits are later selected, without the learned traits being inherited directly. In this field it is the analogy for harness- or context-level learning guiding what later gets baked into weights or code. *Hinton & Nowlan 1987 (no arXiv id) †*
+- **Bi-level search (inner/outer loop).** An outer agent rewrites an inner agent, and the inner agent does the object-level task. The setup is self-referential only if the outer agent is itself the evolved agent. *2609.26457*
+- **Bounded meta-improvement.** The survey consensus that current systems improve inside human-fixed limits: objective, protected evaluator, parent selection and orchestration are not editable. *2609.11873*
+- **Child quality (order-0, Q⁰).** How good the immediate offspring of an improver are, for example the task score of the agent it just produced. Most papers report only this quantity. *IbI, OpenReview ZMmJDeDTXk*
+- **Clade.** A node in the search tree together with all of its descendants. *2510.21614*
+- **Clade metaproductivity (CMP).** The pooled success of a node's descendants. It is used to pick which node to expand, instead of the node's own score. It approximates the Gödel-Machine ideal under assumptions, but it is not the same as successor quality. *2510.21614*
+- **Compounding.** Gains that build on earlier gains, so that later improvement steps are larger or easier because of earlier ones. Hyperagents' direct test (0.640 vs 0.610) was not significant. *2603.19461*
+- **Compute-matched (matched budget).** Comparing methods at the same total token or dollar spend, including search and verification. Without it, an evolved system may only be winning by using more samples. *2607.12227*
+- **Contract gate.** Admitting an improver edit only if it satisfies a declared interface or behavioural contract, with no check on whether it improves the score. *2609.06396*
+- **CoT-SC baseline.** Chain-of-thought with self-consistency (majority vote over samples). At matched cost it beats most automated multi-agent designs. *2606.13003*
+- **Credit assignment (design-level).** Working out which operator, edge, mechanism or edit caused a measured gain. *k2HCLpqs0U (MARS)*
+- **Curriculum.** An ordered sequence of tasks or objectives that changes as the agent improves, either proposed automatically or scheduled by humans. *2305.16291 (Voyager) †; RQGM's walking→jumping schedule, 2606.26294*
+- **Design representation.** The space a meta-agent can edit: a module menu, an operator graph, a typed IR, or free code. The choice of space can matter as much as the search algorithm. *2410.06153*
+- **Directedness.** Whether a self-modification actually targets the failure it was shown, as opposed to random variation filtered by selection. DGM's edits showed no target-directed repair. *2610.14662*
+- **Effective recursion (effective L5).** A revised improvement mechanism that produces or selects better successors under comparable budgets and independent assessment. No paper has reliably shown it. *2609.11873*
+- **Epoch freeze.** Holding the evaluator fixed for a whole epoch, so that search guarantees apply within the epoch, and changing it only at epoch boundaries. *2606.26294*
+- **Erasure (selective).** Deleting stored utility records that depended on a replaced evaluator, so that stale scores do not keep steering search. The no-erasure control kept archive rankings almost unchanged (ρ ≥ 0.90), which shows erasure is necessary. *2606.26294*
+- **Evaluation-free self-improvement.** Improving an agent without scoring candidates on tasks inside the loop, for example by exploring and then integrating changes. *2611.21056*
+- **Evaluator (judge, verifier).** The component that scores candidates. Most systems freeze it, which risks Goodhart effects. A few co-evolve it under an anchor. *2606.26294*
+- **Evidence routing.** Changing which information reaches the improver, for example making it read the evaluation report. IbI traces most Hyperagents gains to one such early edit (Q⁰ 0.476→0.858). *IbI, ZMmJDeDTXk*
+- **Evolve set (search set).** The tasks used for scoring and gating during search. Results reported on this set overstate real gains. *2607.12227*
+- **Executor.** The model or agent that runs a designed system on tasks, as opposed to the designer or meta-agent that writes it. *2605.14212*
+- **Executor-specificity.** A design found with one executor model working worse with another. *2410.10762*
+- **Forgetting.** Losing earlier competence or useful knowledge as the system keeps adapting. At the meta level, this includes losing improvement functions that worked on past states. *eIJH6HV9LZ (IFR / Meta-Forgetting)*
+- **Frozen-executor ceiling.** The limit on gains from training only the designer while the executor stays fixed. Executor-only training saturates for the same reason in reverse. *2605.14212*
+- **Frozen-knowledge control.** A baseline that runs the same improver with its accumulated repair knowledge reset or held fixed. It isolates what the improvement in the improver contributes. *2610.29677*
+- **Gate.** The acceptance rule that decides whether a proposed edit enters the archive or replaces the incumbent. Examples are none, compile-valid, argmax, contract, replay, forecast loss and statistical gates. *2610.07979*
+- **Gödel Machine.** Schmidhuber's theoretical self-rewriting system, which adopts a self-modification only with a proof that it raises expected utility. Every part is editable, including the prover. It has never been practical. *Schmidhuber 2003 (cs/0309048) †*
+- **Goodhart's law.** When a measure becomes the target, it stops being a good measure. Here it describes agents optimizing a frozen evaluator's quirks rather than real quality. *2606.26294*
+- **Harness.** The non-weight code around a model: prompts, tools, middleware, memory, skills and control logic. It is the main unit of optimization when weights are frozen. *2603.28052*
+- **Harness evolution.** Iteratively editing a harness with a proposer that reads traces and scores, while the model weights stay fixed. *2604.25850*
+- **Harness overfitting.** Harness gains that hold only on the evolve set. One audit attributes about 54% of average gains to overfitting and 14% to test-time scaling. *2610.22466*
+- **Held-out evaluation.** Scoring on tasks never used for search or gating. It is the minimum check that a gain is real. *2609.26457*
+- **Higher-order ADAS.** Improving the meta-agent itself rather than only the agents it designs. It was listed as future work in 2024 and is still largely open. *2408.08435*
+- **Hyperagent.** A single editable program that contains both the task agent and the meta-agent, so the improvement procedure is itself open to edits. *2603.19461*
+- **Ignition test.** Swapping the evolved agent in as the outer improver to check whether it improves agents better than the original. AIDE²'s test (0.780 vs 0.782) was inconclusive. *2609.26457*
+- **imp@k.** The task-score improvement a given meta agent achieves within k improvement iterations. It is used to measure improvement ability, for example after transfer to a new domain. *2603.19461*
+- **Improvement Dynamics Model (IDM).** An editable forecaster that predicts task-level outcomes of a proposed diff before the diff is run. It is promoted only if its own prediction loss falls. *2610.13991*
+- **Improver.** The component that produces improvements: a program or agent that edits the target system, and in self-referential setups also edits itself. *2310.02304*
+- **Improver edit (self-edit).** An edit that changes the improvement machinery rather than the task-solving code. Improvers make them in only 1–15% of generations. *IbI, ZMmJDeDTXk*
+- **Incumbent replacement.** Treating search as a sequence of decisions to swap out the deployed design, with switching costs, calibrated promotion margins and rollback. *2610.31436*
+- **Inheritance.** Descendants carrying forward an ancestor's edits. When self-edit rates are low, gains along a lineage mostly reflect inheriting one early edit, not repeated improvement. *IbI, ZMmJDeDTXk*
+- **L1–L5 autonomy levels.** A survey ladder of self-improvement levels, running from L2 (the AI chooses how to improve while objective and acceptance stay fixed) to L5 (recursive inheritance, where improved improvers govern later rounds). *2609.11873*
+- **Label exfiltration.** A meta-agent extracting hidden test labels through side channels such as error tracebacks. It is a form of meta-level reward hacking. *2606.04455*
+- **Lineage.** The ancestry chain of a variant in the archive. *2610.41157*
+- **MAP-Elites / islands.** Population-diversity schemes that keep the best candidate per niche, or evolve separate subpopulations, in evolutionary code search. *2506.13131*
+- **Meta-agent.** An LLM program that designs or revises another agentic system: its prompts, modules, workflow graph, topology or harness. *2408.08435*
+- **Meta-harness.** The harness of the meta-agent itself, for example its skills and principles, which some systems also evolve. *2610.21791*
+- **Meta-overfitting.** An improver or meta-agent tuned so closely to its training domains or executor that its improvement ability fails to transfer. *2610.09197*
+- **Meta-prompt evolution.** Co-evolving the instructions given to the proposing LLM alongside the candidate solutions. *2506.13131*
+- **Meta-utility.** An improver's score defined as the mean downstream utility of what it produces after one application. *2310.02304*
+- **Mutation-prompt.** A prompt that tells the LLM how to mutate task prompts. Evolving mutation-prompts makes prompt evolution self-referential. *2309.16797*
+- **Nested replay.** Re-running a fixed improver state many times from the same starting points to estimate its successor quality directly. It separates real order-1 effects from inheritance. *IbI, ZMmJDeDTXk*
+- **Open-endedness.** Search that keeps producing novel, increasingly capable variants without a fixed endpoint. In practice this usually means keeping a diverse archive rather than greedy hill-climbing. *2505.22954*
+- **Operator graph.** A workflow represented as a graph over a fixed set of operators such as Generate, Review & Revise and Ensemble. *2410.10762*
+- **Order-1 (successor quality, Q¹).** How much better the agents produced by an edited improver are, compared with those of the unedited improver. It measures whether improving the improver helped. IbI estimated δ₁ = +0.003. *IbI, ZMmJDeDTXk*
+- **Order ≥2.** Whether improvements to the improver themselves make later improver improvements better. It is unmeasured in any published system. *IbI, ZMmJDeDTXk*
+- **Parent selection.** The rule for choosing which archive member to expand next: own score, argmax, CMP or comparative selection. In nearly every system it is human-fixed. *2505.22954*
+- **Permutation null.** A baseline built by shuffling lineage or score structure, used to test whether best-so-far curves exceed chance. Archive curves sat inside the null at 119 of 141 checkpoints. *IbI, ZMmJDeDTXk*
+- **Plasticity (loss of).** A learner gradually losing the ability to keep learning after long adaptation. It motivates resets and fresh components in continual self-improvement. *2306.13812 †*
+- **Positive control.** A deliberately effective intervention, for example a procedure-targeted modifier (+0.171), used to show that a measurement method can detect real effects. *IbI, ZMmJDeDTXk*
+- **Proposer.** The model or agent that writes candidate edits, often a coding agent with access to past code, scores and traces. *2603.28052*
+- **Query-level design.** Producing a new agent or workflow for each input query instead of one design per task. *2502.04180*
+- **Recursive self-improvement (RSI).** A system whose improvement process can itself be improved and inherited, formalized as Σ_{t+1} = I_{Σ_t}(Σ_t; S_t). The label is now often applied to fixed-improver object-level evolution as well. *2607.13104*
+- **Reflector.** The component, usually an LLM call, that reads execution traces or failures and writes a diagnosis or proposed revision. *2507.19457 (GEPA) †*
+- **Replay gate.** Admitting an improver edit only if replaying it on stored past states yields a positive score change (Δ > 0). *2610.07979*
+- **Resolution (selection resolution).** Whether an evaluation is precise enough to tell helpful candidates from harmful ones. On noisy evaluations, selection is "no better than random". *2611.23068*
+- **Reward hacking.** Raising the measured score without real improvement, for example by tampering with evaluation code or exploiting the grader. AIDE² reports rates of 55%→32% on held-out kernel pairs. *2609.26457*
+- **RSI Tax.** The extra tokens a self-improvement loop spends, much of it on verification. A cheap note-taking baseline often matches the result. *2611.13524*
+- **Same-start comparison.** Comparing variants from an identical initial state, which is required before crediting gains to the improver. Only 4 of 26 improver claims met this together with matched budget. *2610.27610*
+- **Scaffold.** The program structure wrapped around a frozen model. "Scaffold" and "harness" are used largely interchangeably. *2310.02304*
+- **Selection–validation gap.** How much a selected candidate's advantage shrinks when re-measured on fresh repetitions. *OpenReview h2I3OGkGtU*
+- **Self-lineage contrast.** Comparing descendants with their own ancestors within one run. Because of inheritance it overstates improver effects (+0.293 vs a true δ₁ of +0.003). *IbI, ZMmJDeDTXk*
+- **Self-play.** A model improving by training against or on its own outputs or copies, with no external labels. *2401.01335 (SPIN) †*
+- **Self-referential.** The component that produces improvements is also a target of those improvements. *2410.04444*
+- **Statistical gate (statistical certificate).** Replacing the Gödel Machine's proof with a statistical test or multiple-testing procedure that bounds the probability of accepting a non-improvement. *0FWBc4gY08; 2611.10787*
+- **Structural recursion (structural L5).** A revised mechanism that governs later rounds, without evidence that it yields better successors. *2609.11873*
+- **Supernet (agentic).** A probabilistic super-graph of operators from which a query-dependent multi-agent system is sampled. *2502.04180*
+- **Supply-chain poisoning (of self-modifiers).** Corrupted benchmarks or feedback that lead a self-evolving agent to write vulnerable code. The contamination persists after later clean evolution. *2609.17817*
+- **Test-time-scaling baseline.** Spending the same compute on parallel sampling or voting instead of evolution. On TB2.1 it beat harness evolution (72.3 vs 67.4). *2607.12227*
+- **θ vs Σ.** Model weights (θ) versus scaffold or harness (Σ). Each self-improvement method changes one or both. *2607.13104*
+- **Transfer.** Reusing an evolved agent, harness or improver on new tasks, domains or base models. *2603.19461*
+- **Typed IR.** A checkable intermediate representation that a meta-agent emits and a compiler lowers into a runnable multi-agent system. *OpenReview 6YccHf9cEN*
+- **User simulator.** An LLM playing the human user in interactive benchmarks, so agents can be evaluated and improved without real users. *2406.12045 (τ-bench) †*
+- **Validation gate.** Keeping an edit only if it scores higher on a held-out validation split, sometimes by a 2σ margin. *2611.08946*
+- **Winner's curse.** The best-scoring candidate on a noisy evaluation is usually overestimated, so its test performance drops. Searched scaffolds lost more than 10% from validation to test. *2610.09239; 2602.16805*
+- **World model.** A model that predicts how the environment will respond to actions, used for planning or for cheaply simulating outcomes before acting. *2411.06559 †*
+
+(95 terms)

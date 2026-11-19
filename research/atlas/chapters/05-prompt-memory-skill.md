@@ -1,0 +1,423 @@
+## Prompt/context optimization, memory and skill learning
+
+*Verification marks:* ✓ means I checked the number in the full text this session; the section or table is cited, and "FTV" means `research/FULLTEXT_VERIFICATION.md`. ◐ means the number comes from the abstract only (arXiv/alphaXiv/OpenReview). † means it is from memory and unverified. Full texts are under `/tmp/claude-0/-home-user-nlp-lab-paper-search/b6ee0fee-4f54-593f-a9fa-6ec1fa49d4e7/scratchpad/papers/<id>/paper.txt`.
+
+*Read in full or in their key sections this session:* GEPA, ACE, ReasoningBank, MemRL, Memento, More Memory Worse Agents, RSI Tax, SkillOpt, Skill∞, Useful Memories Become Faulty, Do Self-Evolving Skills Generalize, Experience Rot and Lineage Is Memory (lineage effect sizes). What Should the Reflector See and Are Self-Evolving Agents Continual Learners were already verified in FTV. Self-Consolidation (2602.01966), DCPS, ESPO, FGSE and Do Agent Optimizers Compound were re-read at abstract level only (arXiv API, 2026-11-19).
+
+### At a glance
+
+- **What this corner is.** The model weights stay frozen. The agent improves by editing text state that it reads at execution time. That state comes in four kinds:
+  - prompts and instructions (DSPy/MIPRO, OPRO, TextGrad, GEPA);
+  - evolving contexts or "playbooks" (Dynamic Cheatsheet, ACE);
+  - episodic and semantic memory banks (Reflexion, ExpeL, Memento, ReasoningBank, MemRL);
+  - skills, meaning callable or loadable procedures (Voyager, SkillOpt, SkillOS, Skill∞).
+- **How the surveys classify it:**
+  - Duan et al. (2609.11873) put Reflexion-style in-episode refinement at B0, which is not RSI, and prompt search (GEPA, Promptbreeder) at L2 "strategy autonomy".
+  - Ren et al. (2607.13104) call this "scaffold Σ improvement with θ fixed". They treat a skill as a named update that can live in any substrate. Meta-level skills are the ones that edit the agent itself.
+  - Dai/Ruan et al. ("When, Where, and How Experience Becomes Structure"; alphaXiv-only slug `2611.recursive-self-improvement-llm-agents`, with no arXiv number) separate Prompt, Memory, Skill and Harness by *how each acts at execution time*. They warn that "reuse in later tasks alone does not establish that recursive dependency".
+- **State of the art, as reported by the authors:**
+  - GEPA beats GRPO (24k rollouts) by +6% on average and by up to 20%, with up to 35× fewer rollouts (✓ abstract and Table 1).
+  - ACE gives +10.6% on AppWorld over the selected baselines (✓ Table 1).
+  - ReasoningBank gives +4.6 to +8.3 SR on WebArena (✓ Table 1).
+  - SkillOpt is best or tied in 52/52 cells, taking GPT-5.5 (direct chat) from 58.8 to 82.3 on average (✓ §1, Table 1).
+  - Skill∞ shows that a self-optimizing meta-skill beats its frozen seed, 60.7 vs 55.9 on SkillsBench (✓ Table 1).
+- **The emerging consensus is the opposite of the hype.** Independent stream and cost audits find that simple baselines match the elaborate loops:
+  - A note bounded at 2,048 tokens (SRN) matches or beats Meta-Harness, EvoSkill and RRSI at 65.6–71.0% fewer total tokens. ReasoningBank does not beat Static there (✓ RSI Tax abstract, Table 2).
+  - Greedy parent inheritance carries most of GEPA-style progress (✓ Lineage §1/Table; FTV).
+  - Single-lineage or one-pass optimizers match GEPA: NPO, DCPS and CASD (◐).
+- **The second consensus: stored abstractions are the risky part.**
+  - LLM-consolidated memories first rise and then fall below no-memory (✓ 2605.12978 abstract and §4).
+  - Discarding abstractions after each use beats persisting them by up to +28.0 points (✓ 2610.27406 Table 2).
+  - Stale experience drops success from 63% (no experience) to 23% after a silent tool change (✓ Experience Rot §1, Fig. 1c).
+- **Transfer is weak.** Of 21 self-evolved skills that improved on their training tasks, only 5 kept the whole gain on held-out tasks (✓ 2609.39148 abstract and §1). Prompt and harness gains also trade plasticity against stability under drift (r = −0.72; ✓ FTV).
+- **Biggest open problem.** There is no accepted way to decide *what to admit, keep and retire* in persistent text state, cheaply and under noisy feedback. Candidate approaches are gates, falsification, evidence links and consolidation into weights. None of the papers in this chapter shows cost-normalized compounding over long, drifting streams.
+
+### How it developed
+
+| Month | Paper | What changed |
+|---|---|---|
+| 2022-11 | APE (2211.01910) † | An LLM proposes instructions and the best by score is selected; the generate-and-select baseline. |
+| 2023-03 | Reflexion (2303.11366) † | Verbal self-reflection stored as episodic memory across trials. Within-task only (Duan: B0). |
+| 2023-05 | Voyager (2305.16291) † | Executable code-skill library plus automatic curriculum in Minecraft; the founding skill library. |
+| 2023-08 | ExpeL (2308.10144) † | Cross-task insights distilled from success/failure comparisons; an early "rules memory". |
+| 2023-09 | OPRO (2309.03409); Promptbreeder (2309.16797) † | LLM as optimizer over a scored prompt history. Promptbreeder also evolves its mutation prompts (self-referential). |
+| 2023-10 | DSPy (2310.03714) † | Declarative LM programs with compilable prompts and demos. |
+| 2024-06 | MIPROv2 (2406.11695); TextGrad (2406.07496) † | Bayesian instruction plus few-shot search; "textual gradients" over variables. |
+| 2024-09 | AWM (2409.07429) † | Workflow memory induced from successful web trajectories. |
+| 2025-04 | Dynamic Cheatsheet (2504.07952) † | A test-time evolving cheatsheet; ACE later shows it collapsing (✓ ACE §2.2). |
+| 2025-07 | **GEPA** (2507.19457; ICLR'26 Oral) ✓ | Reflective mutation on traces plus Pareto selection. Claims to beat GRPO with far fewer rollouts. |
+| 2025-08 | **Memento** (2508.16153) ✓ | Memory-augmented MDP: learned case retrieval via soft Q-learning; "fine-tuning without fine-tuning". |
+| 2025-09 | **ReasoningBank** (2509.25140) ✓ | Strategy memory distilled from self-judged successes *and* failures, plus memory-aware test-time scaling (MaTTS). |
+| 2025-10 | **ACE** (2510.04618; ICLR'26) ✓ | Generator, Reflector, Curator. Incremental delta updates against "brevity bias" and "context collapse". |
+| 2026-01 | **MemRL** (2601.03192) ✓ | RL (Q-values) on episodic memory utility; two-phase retrieval. |
+| 2026-02 | Self-Consolidation (2602.01966) ◐ | Contrastive reflection on failures, plus a "self-consolidation" step that distils non-parametric text experience *into compact learnable parameters*. It is an early text-to-parameters hybrid, not a text-compression method. |
+| 2026-03 | EvoTool (2603.04900) ◐ | Modular tool-use policy (Planner/Selector/Caller/Synthesizer) with blame-aware mutation. |
+| 2026-05 | **SkillOpt** (2605.23904); SkillOS (2605.06614); Useful Memories Become Faulty (2605.12978) ✓/◐/✓ | Skill treated as a trained artifact with a strict validation gate; RL-trained skill curator; strong controlled "consolidation hurts" evidence. |
+| 2026-07 | Do Agent Optimizers Compound? (2607.14004) ◐ | On Terminal-Bench 2.0, GEPA's optimized agent transfers *below baseline* on new tasks. Meta Harness transfers well but stops improving. |
+| 2026-08 | NPO (2608.27266), CASD (2609.26261), Optimize Cheap Deploy Strong (2608.10694) ◐ | Simplification wave: single lineage, one-pass coding-agent distillation, cheap-tier search. |
+| 2026-09 | Reflector-See (2609.32452) ✓FTV; Skills Generalize? (2609.39148) ✓; ESPO (2609.04197) ◐; SkillEvoReg; Memory Portability ◐ | Evidence-composition and overfitting studies; skills mostly do not carry over whole. |
+| 2026-10 | Skill∞ (2610.35434) ✓; More Memory Worse Agents (2610.27406) ✓; Continual Learners (2610.25858) ✓FTV; Lineage Is Memory (2610.41157) ✓; GEPA-Curator; HDA ◐ | Self-optimizing meta-skill; error reproduction; plasticity–stability trade-off; inheritance > disclosure. |
+| 2026-11 (1–18) | RSI Tax (2611.13524) ✓; Experience Rot (2611.20922) ✓; FGSE (2611.14326) ◐, WikiTrace, ENGRAM, MDSKILL, MAPE, EvoDisco, SkillBuffBench, DCPS (2611.22605) ◐, "Still Need to Be Told?" ◐; Dai/Ruan mechanism survey ✓(round2 factcheck) | Cost accounting; drift failure; falsification and evidence gates; consolidation into weights; learned memory-evolution strategies; mechanism-level taxonomy. |
+
+### Taxonomy
+
+The axes are taken from the surveys: substrate (Dai/Ruan; Ren Σ = p, m, T, g), update operator, admission rule, and what survives. Dai/Ruan's seven functions are Collect, Evaluate, Diagnose, Abstract, Update, Verify and Consolidate, crossed with four components (✓ `round2/verify/factcheck.md` §3a).
+
+| Approach (substrate · operator) | Admission / survival rule | Representative papers |
+|---|---|---|
+| **Prompt search, generate-and-select** | Best score on val | APE †, OPRO †, DCPS 2611.22605 ◐, BudgetAPO 2610.05671 ◐ |
+| **Prompt search, reflective/evolutionary** | Minibatch gate + Pareto pool / greedy parent | GEPA ✓, Promptbreeder †, ESPO 2609.04197 ◐, NPO ◐, RB-Prompt (ICLR27 uVKMqFVBDG) ◐, Lineage Is Memory ✓, Reflector-See ✓FTV, GEPA-Curator 2610.37651 ◐ |
+| **Prompt search, gradient-like / program compile** | Val score | DSPy/MIPROv2 †, TextGrad †, TextReg (ICLR27 djDvquBq7Y) ◐ |
+| **One-pass distillation from a trace corpus** | None (single synthesis) | CASD 2609.26261 ◐, SRN baseline (RSI Tax) ✓ |
+| **Evolving context / playbook (incremental deltas)** | Curator merge, grow-and-refine | Dynamic Cheatsheet †, ACE ✓, Playbooks→Rulebooks (ICLR27 vOy3tmCrUI) ◐ |
+| **Episodic case memory with learned retrieval** | Q-value / utility on retrieval | Memento ✓, MemRL ✓, BEAM 2610.25119 ◐ |
+| **Distilled strategy/insight memory** | LLM-judge labels, append/merge | ExpeL †, AWM †, ReasoningBank ✓ |
+| **Gated / evidence-linked memory** | Falsification probes, evidence links, discard-after-use | FGSE 2611.14326 ◐, WikiTrace 2611.14320 ◐, Anti-Persistence 2610.27406 ✓, A Fix Is Not a Rule (ICLR27 kWXPigxQKw) ◐ |
+| **Learned consolidation / curation policies** | RL-trained curator / consolidator | SkillOS ◐, Auto-Dreamer 2605.20616 ◐, EvoDisco 2611.22102 ◐, MAPE (program evolution of memory designs) 2611.17068 ◐ |
+| **Skill library (executable / document)** | Self-verification, retrieval | Voyager †, SkillCommit 2608.15165 ◐, Selm 2610.24630 ◐, SkillPilot (ICLR27 mvbj5J6GAZ) ◐ |
+| **Single-skill optimizer** | Strict held-out val improvement | SkillOpt ✓, SkillOpt-Lite 2607.03451 ◐, SkillProx 2608.07449 ◐, SkillEvoReg ◐ |
+| **Meta-level (improver is also text)** | Varies; mostly forced or ungated (FTV) | Promptbreeder †, Skill∞ ✓, MetaSkill-Evolve ✓FTV, FreeEvolve ✓FTV, HMED ✓FTV |
+| **Consolidation into weights** | Verification gate before memory release | Self-Consolidation 2602.01966 ◐ (text → learnable parameters), ENGRAM 2611.09472 ◐, MDSKILL 2611.05313 ◐, From Practice to Weights (ICLR27 QI800NwjXo) ◐, HERD 2610.31401 ◐ |
+| **Audits / benchmarks** | n/a | RSI Tax ✓, Continual Learners ✓FTV, Skills Generalize ✓, Experience Rot ✓, Useful Memories Faulty ✓, HDA 2610.22466 ◐, SkillBuffBench 2611.22017 ◐, Continual-ARC 2611.14505 (FTV notes) |
+
+### Paper cards
+
+**GEPA: Reflective Prompt Evolution Can Outperform Reinforcement Learning** ([2507.19457](https://arxiv.org/abs/2507.19457), Jul 2025, ICLR 2026 Oral)
+- *What it does.* An LLM reads rollout traces and evaluator feedback and proposes per-module prompt edits. A minibatch gate accepts edits. Parents are sampled from the per-instance Pareto front, and an optional Merge step crosses lineages.
+- *Setup.*
+  - Models: Qwen3-8B and GPT-4.1-mini.
+  - Tasks: HotpotQA, IFBench, HoVer, PUPA, AIME-2025, LiveBench-Math.
+  - Baselines: MIPROv2, TextGrad, Trace/OptoPrime, and GRPO (LoRA, 24k rollouts; ✓ §4 and App.).
+  - The main tables report single numbers with no variance.
+- *Key results.*
+  - Qwen3-8B aggregate: GEPA 54.85 vs GRPO 48.91, MIPROv2 47.84 and baseline 45.23, using 1,839–7,051 rollouts per task (✓ Table 1).
+  - GPT-4.1-mini: GEPA 65.22 and GEPA+Merge 66.36 vs TextGrad 59.14 and MIPROv2 58.67 (✓ Table 2).
+  - Prompts optimized on Qwen and run on GPT-4.1-mini still give +9.00 (GEPA-Qwen-Opt 62.03; ✓ Table 2).
+  - Pareto selection gives +12.44 vs SelectBestCandidate +6.05 and BeamSearch +5.11. This aggregate covers 4 tasks only (HotpotQA, IFBench, HoVer, PUPA) on Qwen3-8B (✓ Table 3).
+  - Prompts are up to 9.2× shorter than MIPROv2's (✓ Obs. 4).
+- *Limitations / critiques.*
+  - GEPA loses to GRPO on AIME (32.00 vs 38.00), and Merge collapses IFBench to 28.23 (✓ Table 1). Merge instability comes from configuration sensitivity, and no static feature predicts merge accepts (2610.34027 ◐).
+  - Lineage Is Memory finds that greedy parent inheritance, not wide feedback disclosure, drives most progress. Reflection is only 2–15% of GEPA tokens; validation and gating take the rest (✓ FTV).
+  - Other limits:
+    - Prompt bloat: GEPA prompts are up to 3× longer "yet no more accurate" (ESPO ◐ abstract).
+    - GEPA's optimized agent transfers below the unoptimized baseline on new TB2.0 tasks (2607.14004 ◐).
+    - Under drift it is plastic but unstable (2610.25858 ✓FTV).
+    - DCPS matches GEPA's macro accuracy on GPT-4.1-mini with 55% fewer rollouts and 32% lower measured API cost (◐ abstract).
+
+**ACE: Agentic Context Engineering** ([2510.04618](https://arxiv.org/abs/2510.04618), Oct 2025, ICLR 2026)
+- *What it does.* A Generator, Reflector and Curator build an itemized "playbook". Updates are localized deltas plus grow-and-refine, instead of a monolithic rewrite. It works offline (system prompt) and online (memory).
+- *Setup.* DeepSeek-V3.1 (non-thinking) on AppWorld (ReAct) and on FiNER/Formula finance. Baselines are ICL, MIPROv2, GEPA and Dynamic Cheatsheet (DC).
+- *Key results.*
+  - AppWorld: +10.6% on average over the selected baselines. Offline, with GT labels, it beats ReAct+ICL by 12.3% and ReAct+GEPA by 11.9%. Offline without ground-truth labels it is +14.8% over base ReAct (✓ Table 1 and §4.3 text).
+  - Finance offline with labels: average 81.9 vs GEPA 72.5 (✓ Table 2).
+  - Adaptation latency −86.9% on average (✓ §1 contributions / §4.7).
+  - Context collapse (DC case study): an 18,282-token context at step 60 fell to 122 tokens in the next step, and accuracy went from 66.7 to 57.1, below the 63.7 no-adaptation baseline (✓ §2.2).
+- *Limitations / critiques.*
+  - Without reliable labels ACE *degrades*: FiNER online without labels is −3.4 (67.3 vs 70.7), and FiNER offline without labels is only +0.4 (✓ Table 2). The authors admit it depends on a strong Reflector (✓ §5 "Limitations and Challenges").
+  - An episodic-only control that keeps raw trajectories is "competitive with the lesson-style consolidators", a set that includes ACE, AWM and DC (2605.12978 ✓ §1).
+  - SelfImprove-Bench finds ACE gains inconsistent (round3 notes †).
+  - The incremental-delta argument sits awkwardly next to SRN, a monolithically rewritten but bounded note that works well (RSI Tax ✓).
+
+**ReasoningBank: Scaling Agent Self-Evolving with Reasoning Memory** ([2509.25140](https://arxiv.org/abs/2509.25140), Sep 2025, UIUC and Google Cloud AI Research; preprint)
+- *What it does.* Distils transferable strategy items from trajectories that an LLM judge labels as success or failure. MaTTS spends extra rollouts per task to get contrastive signal.
+- *Setup.*
+  - WebArena (684 tasks), Mind2Web and SWE-Bench-Verified.
+  - Models: Gemini-2.5-flash/pro and Claude-3.7-sonnet.
+  - Baselines: Synapse and AWM.
+- *Key results.*
+  - WebArena overall SR over no-memory: +8.3, +7.2 and +4.6 for the three backbones. MaTTS (parallel, k=5) brings this to 51.8, 56.3 and 48.8 (✓ Table 1).
+  - SWE-Bench-Verified: 34.2→38.8 (flash) and 54.0→57.4 (pro) (✓ Table 2).
+  - Adding failures helps ReasoningBank (46.5→49.7) but hurts AWM (44.4→42.2); Synapse goes 40.6→41.7. This is WebArena-Shopping with Gemini-2.5-flash (✓ §5 ablation text, Fig. 7).
+- *Limitations / critiques.*
+  - Correctness signals come from an LLM-as-a-judge, with no ground-truth labels (✓ §3; judge calibration in §5).
+  - On cost-accounted streams ReasoningBank does not beat Static: 40.0 vs 43.8 on SWE-Chain-Evo with DeepSeek V4.1 Flash, and 69.7 vs 69.7 on TB2.1. 63.57% of its RSI tax is associated with state that is not used in later tasks (✓ RSI Tax Table 2, §5.2).
+  - It is the most stable but least plastic of the three methods in the drift study (✓FTV).
+
+**The RSI Tax: When Recursive Self-Improvement Is Not Worth the Cost** ([2611.13524](https://arxiv.org/abs/2611.13524), 10 Nov 2026, PKU; preprint)
+- *What it does.* Each task is scored before its feedback is used. Total tokens, including all self-improvement tokens, are counted. The tax is decomposed into verify, explore and write, and tracked against later use.
+- *Setup.*
+  - Streams: SWE-Chain-Evo (105 positions from seven 15-task chains) and Terminal-Bench 2.1 (89 tasks).
+  - Models: DeepSeek V4.1 Flash and GPT-6 Luna.
+  - Methods: Static, ReasoningBank, Meta-Harness, EvoSkill, RRSI, and SRN (a bounded note of at most 2,048 tokens).
+- *Key results.*
+  - SRN has the highest accuracy in 3 of 4 settings (48.6, 41.0, 78.7) and ties EvoSkill in the fourth (68.5). It gains +4.7 pp over Static for +3.6% tokens, and saves 65.6% / 71.0% / 68.2% of tokens vs Meta-Harness / EvoSkill / RRSI (✓ Table 2, §5.1).
+  - Verification is 74.8–93.6% of the tax for Meta-Harness, EvoSkill and RRSI (✓ §5.2).
+  - On the DeepSeek terminal stream, EvoSkill spends 497.45M tokens re-validating its frontier vs 182.26M on the 89 arriving tasks (✓ §5.2).
+- *Limitations.* One ordering, no repeated runs, and use-attribution is descriptive only (✓ Limitations). Even so, every method paper in this chapter now needs an SRN-like baseline.
+
+**More Memory, Worse Agents: Error Reproduction and Anti-Persistence** ([2610.27406](https://arxiv.org/abs/2610.27406), 19 Oct 2026, Indiana/Tencent HY; preprint)
+- *What it does.* Names "error reproduction": a wrong abstraction shapes trajectories, and new abstractions re-derived from those trajectories regenerate the error. Its Anti-Persistence method stores only trajectories and outcomes. A bandit picks a synthesis mode per task, and the guidance it builds is discarded after use.
+- *Setup.* ALFWorld, WebShop and ScienceWorld. Backbones Llama-4-Scout, Qwen3-Coder-Next and Gemma-4-31B-it. 3 seeds and K=10 rounds (✓ §4).
+- *Key results.*
+  - Llama ALFWorld: Anti-Persistence 54.7 vs abstraction memory 42.7, trajectory memory 41.6, Reflexion 46.7 and ExpeL 7.2 (✓ Table 1).
+  - Discard vs persist: +28.0, +12.3, +3.3 and +6.7 (Llama ALF/Web, Qwen ALF/Web; ✓ Table 2).
+  - Trajectory memory often beats abstraction memory, e.g. Qwen ScienceWorld 43.8 vs 34.0 (✓ Table 1).
+  - Anti-Persistence is not best everywhere: on Gemma ScienceWorld joint memory scores 56.3 vs 54.1, and on Gemma ALFWorld Reflexion scores 98.0 vs 97.3 (✓ Table 1).
+- *Limitations.* Three text benchmarks only, a fixed synthesis procedure, and auxiliary analyses without uncertainty (✓ App. H).
+
+**Useful Memories Become Faulty When Continuously Updated by LLMs** ([2605.12978](https://arxiv.org/abs/2605.12978), May 2026, v2 29 Aug 2026, UIUC/Tsinghua IIIS; preprint)
+- *What it does.* Tracks the utility of LLM-consolidated memory over time and builds ARC-AGI Stream with Retain, Delete and Consolidate actions.
+- *Setup.* ALFWorld, ScienceWorld, WebShop and AppWorld. It tests seven published frameworks: LangMem, Mem0, ProPlay, ACE, AWM, Letta and Dynamic Cheatsheet (✓ §4.3). Models are GPT-5.4 (ARC-AGI Stream and ALFWorld consolidation), GPT-5.4-mini, and Claude Sonnet 5 for the cross-framework sweep.
+- *Key results.*
+  - Utility rises and then falls below no-memory. For example, AWM on WebShop goes from 0.64 at 8 examples to 0.20 at 128, while no-memory sits at 0.20 (✓ §4).
+  - Consolidating even from *ground-truth* solutions drops GPT-5.4 from 100% to 54% accuracy on a 19-problem ARC slice it had solved without memory, so it fails on 46% (✓ §1, §4, Fig. 2). Note that the abstract phrases this as "fails on 54%", which conflicts with the body. Over 10 runs on 33 tasks, pass@1 falls from 58.5 to 38.5 (✓ Table 2).
+  - An episodic-only control is competitive with the consolidators (✓ abstract, §1).
+  - Agents that may choose preserve raw episodes and double the accuracy of forced consolidation (✓ abstract).
+- *Critique.* This is a direct counter to ACE and ReasoningBank-style distillation. It also predicts the RSI Tax finding that much written state is never used.
+
+**SkillOpt: Executive Strategy for Self-Evolving Agent Skills** ([2605.23904](https://arxiv.org/abs/2605.23904), May 2026, Microsoft/SJTU; preprint, heavily viewed)
+- *What it does.* Treats one skill document as trainable state. An optimizer model proposes bounded add/delete/replace edits under a "textual learning-rate" budget. An edit is accepted *only if it strictly improves held-out validation*. A rejected-edit buffer and an epoch-wise slow/meta update are added.
+- *Setup.*
+  - 6 benchmarks: SearchQA, SpreadsheetBench, OfficeQA, DocVQA, LiveMathematicianBench, ALFWorld.
+  - 7 targets, from GPT-5.5 down to Qwen3.5-4B.
+  - 3 harnesses: direct chat, Codex and Claude Code.
+  - The default split is 2:1:7 train/selection/test when no benchmark split is given (✓ App.), with split_seed 42 (✓ §4). I found no seed variance.
+- *Key results.*
+  - Best or tied in 52/52 cells (✓ §1).
+  - GPT-5.5 direct-chat average 58.8→82.3 (+23.5), and +5.4 over the per-cell best of six baselines (human, one-shot, Trace2Skill, TextGrad, GEPA, EvoSkill) (✓ §1; averages recomputed from §1 per-benchmark numbers).
+  - SpreadsheetBench 41.8→80.7 (✓ §1, Table 1).
+  - A Codex-trained spreadsheet skill gains +59.7 in Claude Code (✓ §1).
+- *Limitations / critiques.*
+  - It needs reliable verifiers and is a single skill only (✓ App. B).
+  - OEO beats SkillOpt/GEPA 12/14 at 34.3% of budget (◐ via notes).
+  - An e-detector stops SkillOpt/GEPA at rounds 4–12 of 40 with no loss (2610.04756 ◐).
+  - A two-model replication study on local reasoning models exists (2610.26020; I did not read its result).
+
+**Skill∞: Recursive Self-Improvement for Agent Skill Optimization** ([2610.35434](https://arxiv.org/abs/2610.35434), 26 Oct 2026, NUS/CityU; preprint)
+- *What it does.* A meta agent follows a meta-skill to optimize task skills, and uses the same procedure to optimize the meta-skill itself. This is the clearest "skill as self-referential improver" instance. All main runs use the Codex CLI with GPT-6 Luna (✓ Table 1 caption).
+- *Key results.*
+  - On 83 SkillsBench tasks (avg@5): Skill∞ 60.7 vs 55.9 without self-improvement, i.e. with the seed meta-skill (✓ Table 1).
+  - Self-improvement costs about as many tokens as eleven task-skill optimizations. Spread over 83 task skills, this adds under 15% to each optimization (✓ §4.6).
+- *Critique.*
+  - Per-domain results are mixed: it is lower than the frozen meta-skill in 3 of 8 domain columns (51.4 vs 54.3, 57.1 vs 60.0, 47.3 vs 52.7) and ties in one (✓ Table 1).
+  - FTV notes that most meta-skill systems force or never gate meta edits.
+
+**Do Self-Evolving Skills Generalize to Held-Out Tasks?** ([2609.39148](https://arxiv.org/abs/2609.39148), Sep 2026, v2 7 Oct 2026, Osaka/SANKEN; preprint)
+- *What it does.* Five self-evolving methods plus a one-shot skill, run on six benchmarks with the same model, agent and splits. It also proposes its own method, which scores highest on all six benchmarks, 4.3–22.5 points above the best existing method (✓ §1).
+- *Key results.*
+  - Of 21 skills that improved on training tasks, 5 keep the full gain on test, 13 keep part and 3 keep none (✓ abstract, §1, §4).
+  - Skills that transfer badly hard-code task-specific details such as column names and output files, or generalize a one-off fix into a rule (✓ abstract, §4).
+  - An LLM judge reading the skill ranks skills as the test does in 86% of comparisons (◐ abstract).
+- *Implication.* This is the cleanest meta-overfitting evidence at the object level.
+
+**Lineage Is Memory** ([2610.41157](https://arxiv.org/abs/2610.41157), 30 Oct 2026, Santa Clara; preprint)
+- *What it does.* 1,750 pre-registered runs on nine prompt and program-synthesis task families: seven primary constructed tasks plus two public ones (banking77, bbh_ste). It separates parent inheritance from feedback breadth at matched budgets (✓ abstract, Table 1).
+- *Key results.*
+  - Greedy parent inheritance beats seed-reset even when seed-reset gets clustered summaries of all failures or a bigger proposer (✓ FTV).
+  - The lineage advantage is +0.238 [+0.224, +0.252] across the seven primary tasks, shrinking to +0.088 on public tasks, where it is driven by banking77 (+0.158 vs +0.017 on bbh_ste) (✓ §1, Table 4 text).
+  - On banking77, GEPA mb3 initially beat the paper's parent-first loop (0.664 vs 0.372) (✓ §6).
+  - Reflection is 2–15% of GEPA tokens (✓ FTV).
+- *Limitations.* Very short budgets (8/12 rounds †), mostly constructed tasks, and no noisy feedback (✓ FTV).
+
+**What Should the Reflector See?** ([2609.32452](https://arxiv.org/abs/2609.32452), 26 Sep 2026, Penn State; ICLR 2027 submission [7e7pAnM0JR](https://openreview.net/forum?id=7e7pAnM0JR))
+- *What it does.* Compares 9 evidence strategies with Qwen3.5-9B in every role on 5 datasets.
+- *Key results.*
+  - Failures-only gives the largest test gain, +8.0 pp, mostly from LiveBench-Math.
+  - No-examples best improves sampled parents but gains only +1.4 on test.
+  - Calibration vs test correlation is r = 0.70 (✓ FTV, abstract).
+- *Limitations.* Single runs and correct evaluators only (✓ FTV).
+
+**Are Self-Evolving Agents Continual Learners?** ([2610.25858](https://arxiv.org/abs/2610.25858), 19 Oct 2026; preprint)
+- *What it does.* Runs GEPA, Meta-Harness and ReasoningBank on four drifting streams built from BIRD, BFCL and ScienceWorld (✓ abstract).
+- *Key results.*
+  - Plasticity and stability trade off, r = −0.72 (n=12).
+  - Self-modifiers overwrite global state; one accepted edit destroyed clarification-asking behaviour.
+  - Meta-Harness looks stable only because its gate freezes the workspace (✓ FTV).
+- *Limitations.* Semi-synthetic drift; surface is confounded with method.
+
+**Memento: Fine-tuning LLM Agents without Fine-tuning LLMs** ([2508.16153](https://arxiv.org/abs/2508.16153), Aug 2025, UCL/Huawei Noah's Ark; preprint)
+- *What it does.* An M-MDP with a growing case bank of (s, a, r) cases. Case selection is learned by soft Q-learning, with a parametric or non-parametric retriever. A GPT-4.1 planner works with an o4-mini executor by default, and o3 for GAIA (✓ §4).
+- *Key results.*
+  - GAIA val 87.88% Pass@3 and test 79.40% (✓ abstract).
+  - Out-of-distribution QA +4.7 to +9.6 (✓ abstract).
+  - But on DeepResearcher at iteration 5, parametric CBR scores 85.44 vs 84.47 for Memento *without* case memory (✓ Table 4). Most of the gain therefore comes from the planner and tools.
+  - The case bank "saturates quickly" with about 3k training items (✓ §5.5.3).
+- *Critique.* Pass@3 headline; small memory delta.
+
+**MemRL: Self-Evolving Agents via Runtime RL on Episodic Memory** ([2601.03192](https://arxiv.org/abs/2601.03192), Jan 2026, v2 Feb 2026; preprint)
+- *What it does.* Each memory triplet gets a TD-updated Q-value. Retrieval is two-phase: semantic recall, then utility rerank with λ-weighting.
+- *Setup.* BigCodeBench (GPT-4o), Lifelong Agent Bench OS/DB (GPT-4o-mini), ALFWorld (GPT-5-mini) and HLE (Gemini-3-pro) (✓ Table 1).
+- *Key results.*
+  - Runtime learning over 10 epochs, average last-epoch score: 0.772 vs MemP 0.736 and no-memory 0.631 (✓ Table 1).
+  - Frozen-memory transfer: 0.794 vs MemP 0.766, RAG 0.765 and no-memory 0.709 (✓ Table 2).
+  - λ = 0.5 is optimal (✓ Fig. 5).
+- *Critique.*
+  - The "runtime" numbers come from repeated epochs over the same tasks, so the cumulative-success metric (CSR) favours retries. A plain Pass@10 retry baseline already reaches an average CSR of 0.743 vs MemRL's 0.798 (✓ Table 1).
+  - The backbone differs per benchmark.
+
+**Experience Rot: Experienced Agents Fail Where Novices Succeed** ([2611.20922](https://arxiv.org/abs/2611.20922), 16 Nov 2026, UChicago/eBay/U. Florida; preprint)
+- *What it does.* Silently changes MCP tool interfaces (renamed fields, reversed meanings) after the agent has gained experience.
+- *Key results.*
+  - With incomplete documentation (six models, four changes): no experience 63%, valid experience 100%, out-of-date experience 23% (✓ §1, Fig. 1c).
+  - Agents copy their earlier call and then report success (✓ abstract).
+  - Failure grows with the amount of experience and appears in every memory form tested. Announcing the update barely helps (✓ abstract and §1).
+- *Implication.* Persistent text state needs staleness detection. This is the drift-side twin of error reproduction.
+
+**Remaining papers**
+
+| id | title | one-liner | mark |
+|---|---|---|---|
+| 2303.11366 | Reflexion | Verbal episodic reflection across trials (B0 per Duan) | † |
+| 2308.10144 | ExpeL | Cross-task insight extraction; 7.2 on Llama ALFWorld in 2610.27406 | †/✓(T1) |
+| 2305.16291 | Voyager | Code-skill library plus curriculum; "compositional override" break in Gomoku (2611.04952 ◐) | †/◐ |
+| 2309.03409 | OPRO | LLM-as-optimizer over a scored prompt trajectory | † |
+| 2310.03714 / 2406.11695 | DSPy / MIPROv2 | Compilable LM programs; Bayesian instruction plus demo search | † |
+| 2406.07496 | TextGrad | Textual gradients; 59.14 aggregate on GEPA's GPT-4.1-mini suite | ✓(GEPA T2) |
+| 2309.16797 | Promptbreeder | Self-referential evolution of mutation prompts | † |
+| 2504.07952 | Dynamic Cheatsheet | Test-time cheatsheet; shows collapse (ACE §2.2) | ✓(via ACE) |
+| 2602.01966 | Self-Consolidation for Self-Evolving Agents | Contrastive reflection on failures, plus distillation of text experience into compact learnable parameters | ◐ |
+| 2603.04900 | EvoTool | Blame-aware module mutation plus diversity selection for tool-use policies | ◐ |
+| 2605.06614 | SkillOS | RL-trained skill curator with a frozen executor; reward from later related tasks | ◐ |
+| 2605.20616 | Auto-Dreamer | GRPO-trained offline consolidator with provenance-linked trajectories | ◐ |
+| 2607.14004 | Do Agent Optimizers Compound? | On TB2.0, GEPA transfers below baseline and Meta Harness stalls in round 2; RELAI-VCL reaches 76.4% lifelong vs 66.0% for GEPA | ◐ |
+| 2608.10694 | Optimize Cheap, Deploy Strong | GEPA search on the cheapest tier (>96% of tokens) transfers upward across 11 models | ◐ |
+| 2608.27266 | NPO | Single-lineage teacher revision ≈ GEPA with fewer rollouts | ◐ |
+| 2609.26261 | CASD | One-pass coding-agent distillation from a static trace corpus beats GEPA on 3/4 | ◐ |
+| 2611.22605 | DCPS ("Simplicity Goes Far") | APE-style control matches GEPA macro accuracy on GPT-4.1-mini with 55% fewer rollouts and 32% lower cost; heavier mechanisms keep an edge on some open-ended and reasoning tasks | ◐ |
+| 2609.04197 | ESPO | Error clustering plus bootstrap selection: 74.67 vs 70.91 (GEPA) on 7 benchmarks, prompts 47% shorter | ◐ |
+| 2610.34027 | When Does GEPA Merge Help? | Merge instability is configuration sensitivity | ◐ |
+| 2610.37651 | GEPA-Curator | Filters noisy failures out of GEPA's evidence | ◐ |
+| 2610.13287 | Do Prompt Optimizers Break Unscored Requirements? | Regressions are mostly a 200-token-cap truncation artefact | ◐ |
+| 2610.04756 | When Is Enough Enough? | Anytime-valid stopping saves 49–92% of tokens | ◐ |
+| 2609.30861 | SkillEvoReg | Dropout and complexity regularization against skill overfitting | ◐ |
+| 2608.15165 | SkillCommit | Instance patches promoted to skills only after cross-instance replay | ◐ |
+| 2610.25119 | BEAM | Context-conditioned Bayesian belief over memory value | ◐ |
+| 2611.14326 | FGSE (falsification-gated) | Lessons as hypotheses tested on transfer, falsification and archived-regression probes; WebArena 39.8, AppWorld 78.8; harmful committed updates 3.6% | ◐ |
+| 2611.14320 | WikiTrace | Lessons linked to their source trajectories reduce memory-induced degradation | ◐ |
+| 2611.17068 | MAPE | Evolves memory programs: up to +12% at 35% of serving cost; keeping raw conversations is a recurring winning pattern | ◐ |
+| 2611.22102 | EvoDisco | Learned policy over Abstract/Refine/Bridge/Reframe memory operators | ◐ |
+| 2611.09472 | ENGRAM | Verified consolidation into weights; release memory only after a probe gate | ◐ |
+| 2611.05313 | MDSKILL | Multi-view distillation of skill memory into weights (OPSD) | ◐ |
+| 2609.05339 | Memory Portability | KG-fixed survives a writer swap (+0.0004); NOTES are model-coupled | ◐ |
+| 2610.22466 | Harness-Delta Attribution | Of significant gains, 54% is overfitting and 14% test-time scaling (21 settings) | ◐(notes) |
+| 2611.04952 | Artifact-to-Capability | Reflexion, Voyager and DGM show proxy signals but break capability formation | ◐ |
+| 2611.05108 | Continual AutoResearch | Persistent state helps early (+24) but only +1.2 at the deadline; shuffled-card control | ◐ |
+| 2611.22017 | SkillBuffBench | Skill access × memory × harness × model factorial | ◐ |
+| 2611.23219 | Do LLM Agents Still Need to Be Told How to Self-Improve? | Capable models build their own context-optimization loop in games | ◐ |
+| ICLR27 [h2JEHQDwuD](https://openreview.net/forum?id=h2JEHQDwuD) | Rethinking Self-Evolving Agent Memory: Content, Writer, Source | No best representation; success-derived > failure-derived by up to 38 pp | ◐ |
+| ICLR27 [kWXPigxQKw](https://openreview.net/forum?id=kWXPigxQKw) | A Fix Is Not a Rule | Correction-scope learning raises positive pairs from 51.9% to 87.8% | ◐ |
+| ICLR27 [wSdg23aQOr](https://openreview.net/forum?id=wSdg23aQOr) | When Can a Skill Library Trust Its Execution Records? | Retrospective gate value −0.591 F1, 95% CI [−1.425, 0.042] | ◐ |
+| ICLR27 [uVKMqFVBDG](https://openreview.net/forum?id=uVKMqFVBDG) | RB-Prompt | Detects and repairs prompt saturation; 40–45% fewer tokens than TextBO-GEPA | ◐ |
+| ICLR27 [djDvquBq7Y](https://openreview.net/forum?id=djDvquBq7Y) | TextReg | Regularized text gradients; OOD up to +11.8 over TextGrad | ◐ |
+| ICLR27 [QI800NwjXo](https://openreview.net/forum?id=QI800NwjXo) | From Practice to Model Weights | Skill library → LoRA; 5.6–5.8× less context; LiveCodeBench 19.8 vs 17.0 | ◐ |
+| ICLR27 [vOy3tmCrUI](https://openreview.net/forum?id=vOy3tmCrUI) | From Playbooks to Rulebooks (ACE extension) | 82% vs 48% on a single workflow (n=50) | ◐ |
+
+### Consensus, debates & contradictions
+
+- **Successes or failures as evidence?** The papers point in three directions:
+  - Failures help: ReasoningBank (failures help it, hurt AWM; ✓ Fig. 7 text), Reflector-See (Failures-only best, +8.0 ✓FTV) and Self-Consolidation (contrastive failure reflection ◐).
+  - Successes win: the ICLR27 "Content, Writer, Source" study says success-derived memory beats failure-derived by up to 38 pp (◐).
+  - Curate the failures: GEPA-Curator says noisy failures are harmful (◐).
+  - Likely resolution: it depends on whether a failure is *diagnosable from the trace*. No paper reviewed here crosses evidence type with feedback noise.
+- **Distil or keep raw?**
+  - ACE and ReasoningBank argue for distilled strategies.
+  - Against them: Useful Memories Become Faulty (✓), Anti-Persistence (✓ Table 2), MAPE (raw conversations recur as the winning pattern ◐) and WikiTrace (◐). All say raw episodes are first-class evidence and abstractions should be temporary or evidence-linked.
+- **Does search sophistication matter?**
+  - Yes: GEPA's Pareto selection gives +12.44 vs greedy +6.05 on 4 tasks (✓ Table 3). DCPS also finds heavier mechanisms keep an edge on some open-ended and reasoning tasks (◐).
+  - No: Lineage Is Memory (greedy inheritance carries progress ✓), NPO, DCPS and CASD (◐), and SRN beating Meta-Harness and EvoSkill (✓).
+  - The difference is budget and noise. GEPA's test used single runs on minibatch gates; Lineage used short budgets.
+- **Incremental vs monolithic rewriting.** ACE blames monolithic rewriting for collapse (✓ §2.2). SRN rewrites monolithically but with a hard 2,048-token cap and wins (✓). So the length bound, not the delta format, may be what prevents collapse; no paper reviewed here tests this.
+- **Prompt optimization vs RL.**
+  - GEPA's "beats GRPO" holds on 5/6 tasks with LoRA GRPO (✓ §4, Table 1; AIME is the exception).
+  - Against it: Prompt or Policy (2610.18309; notes †), Do Agent Optimizers Compound (◐), and NPO, where GRPO wins some games (◐).
+  - Most consolidation papers (Self-Consolidation, ENGRAM, MDSKILL, HERD) treat text state as a *staging area* for weights, not a replacement.
+- **Transfer.**
+  - Positive: GEPA-Qwen-Opt +9.00 (✓), cheap→strong tier (◐) and SkillOpt Codex→Claude Code +59.7 (✓).
+  - Negative: only 5 of 21 skills keep their full held-out gain (✓), FreeEvolve cross-environment −4.9/−7.1 (✓FTV), and memory upgrade asymmetry (◐).
+  - Positive transfer is mostly near-domain or upward-in-capability. Far or held-out-task transfer is weak.
+- **Labels and gates.**
+  - ACE "works without labels" on AppWorld (+14.8, ✓ Table 1), but degrades without labels on finance (FiNER online −3.4, ✓ Table 2).
+  - SkillOpt relies on a strict held-out gate (✓).
+  - wSdg23aQOr estimates that a retrospective gate's value can be negative (◐).
+  - FGSE argues for falsification probes (◐).
+  - Gate value has not been shown to be reliably positive.
+
+### Open problems
+
+1. **Cost-normalized compounding.** In the papers reviewed here, no method beats a bounded-note baseline (SRN) on total tokens *and* keeps improving over a long stream. RSI Tax used one ordering with no repeats (✓ Limitations).
+2. **Admission under noisy feedback.** How should a lesson, skill edit or playbook delta be accepted when the reward or judge is wrong? Should one use falsification probes, evidence links, or discard-after-use? No paper reviewed here crosses the evidence channel (traces read) with the selection channel (scores) under controlled error.
+3. **Retirement and staleness.** Experience Rot (✓) and the drift study (✓FTV) show stored state actively hurts after a change. I found no published detector that retires state from drift signals and that is evaluated against a no-memory oracle.
+4. **Why consolidation fails.** Useful Memories Become Faulty shows that even ground-truth consolidation regresses (100% → 54% accuracy on a solved slice; ✓ §4). Is the cause abstraction error, overwriting, or misapplication? An attribution study with surgery (delete the rule, measure recovery) is missing.
+5. **Held-out generalization of skills and prompts.** Prompts and skills need held-out evaluation and anti-overfitting objectives. SkillEvoReg and TextReg have ◐ results only. The LLM-judge "skill reading" predictor (86% ◐) is an untested gate.
+6. **Meta-level text improvers.** Promptbreeder, Skill∞, MetaSkill-Evolve and FreeEvolve exist, but meta edits are mostly forced or ungated (FTV). I found no order-1 measurement (a better improver produces better skills from fixed starts) for skill or memory optimizers.
+7. **When to move text into weights.** Self-Consolidation, ENGRAM, MDSKILL, LoRA consolidation and HERD each use a different trigger. There is no head-to-head comparison at matched compute with forgetting measured.
+8. **Benchmark hygiene.** Memento's Pass@3, MemRL's repeated-epoch cumulative success, single-run GEPA tables and "search set = test set" practices (FTV: Meta-Harness on TB2) inflate claims. HDA attributes about 54% of gains to overfitting (◐).
+
+### Where it is heading (to mid-2027)
+
+- **Cost-accounted stream evaluation becomes standard.** Expect RSI-Tax-style total-token reporting, SRN, Static and shuffled-memory controls, and anytime-valid stopping.
+- **Admission gating replaces append-only memory.** Falsification-gated lessons, evidence-linked memories, correction-scope models and strict-validation skill edits will converge into "memory as hypotheses with tests".
+- **Learned curators and operators.** RL-trained skill curators (SkillOS), consolidators (Auto-Dreamer), operator policies (EvoDisco) and program-evolved memory designs (MAPE) will make the update rule itself the learned object. This is the bridge from L2 to Duan's L3 and Ren's meta-level skills.
+- **Hybrid text-to-weights pipelines.** Text state works as fast, auditable staging; verified consolidation then moves it into parameters, LoRA or OPSD weights (Self-Consolidation, ENGRAM, MDSKILL, From Practice to Weights, HERD).
+- **Skills as the portable unit.** Claude Code, Codex and OpenCode all load the Agent Skills format (✓ Skill∞ §1), which makes skill optimization harness-agnostic. Benchmarks such as SkillsBench, SkillBuffBench and Continual-ARC will push held-out and with-memory evaluation.
+- **Drift and robustness.** Expect "rot", interface-change and memory-poisoning benchmarks to become required for any persistent-memory claim.
+
+### Connection to our ideas (ONE_PAGERS.md)
+
+- **#1 Taught, Not Selected.** This corner *is* the natural host.
+  - Reflective prompt, memory and skill optimizers have exactly two channels: what the reflector reads, and what the gate selects.
+  - Supporting evidence for the teaching channel:
+    - ACE degrades without reliable labels (✓ Table 2).
+    - ReasoningBank relies on LLM-judge labels (✓ §3).
+    - Error reproduction through trajectories (✓ 2610.27406).
+    - Experience Rot: agents copy stale successful calls and report success (✓).
+  - The open cell is unchanged: in the papers reviewed, none runs trace-source × fitness-source under environment errors.
+  - Use GEPA (minibatch gate), ACE (no gate, curator merge) and SkillOpt (strict validation gate) as three hosts that differ in how much they read and how they gate.
+  - Add SRN and Anti-Persistence (discard abstractions) as "trace hygiene" comparison arms.
+- **#3 Gate, Not Willingness / 2+3 merged.** This corner gives the object-level gate spectrum, from append-all (ReasoningBank) through strict validation (SkillOpt) and falsification (FGSE) to negative-value retrospective gates (wSdg23aQOr). Skill∞ and MetaSkill-Evolve are ready meta-level arms where self-edits are forced or ungated.
+- **#6 Meta-Overfitting.**
+  - "Do Self-Evolving Skills Generalize" (5/21 keep their full gain) is the object-level precedent.
+  - Skill∞'s meta-skill is a cheap, portable improver for a home-vs-far-domain test. Its self-improvement costs about 11 task-skill optimizations (✓ §4.6).
+  - Graded domain distance and a procedure × memory 2×2 remain open.
+- **#7 Varying Goals / #9 MetaShift.** The drift study (r = −0.72 ✓FTV) and Experience Rot (✓) show that persistent text state hurts after a change. Our ideas ask when *editing the improver* helps under change, which none of these papers tests. Experience Rot's silent interface change is a ready MetaShift-style perturbation.
+- **#8 Openness Ladder.** Prompt ⊂ playbook ⊂ memory ⊂ skill ⊂ harness is a natural rung order (Dai/Ruan components). SRN (one bounded note) vs ACE vs SkillOpt vs Meta-Harness under the RSI Tax makes a cost-aware ladder.
+- **Must-cite baselines and controls for any of our papers:**
+  - SRN (RSI Tax)
+  - Static / no-memory
+  - shuffled memory (Continual AutoResearch)
+  - discard-after-use (Anti-Persistence)
+  - episodic-only / raw-trajectory control (Useful Memories Become Faulty)
+  - greedy-lineage GEPA (Lineage Is Memory)
+  - held-out task splits (Skills Generalize)
+  - generate-and-select control at matched rollouts (DCPS)
+  - total-token accounting
+
+#### Fact-check log
+
+| Claim | Verdict | Source location |
+|---|---|---|
+| GEPA beats GRPO by +6% on average, up to 35× fewer rollouts | confirmed (abstract also says "up to 20%"; added) | 2507.19457 abstract l.33–34; §1 |
+| GEPA Qwen3-8B aggregate 54.85 / GRPO 48.91 / MIPROv2 47.84 / base 45.23; rollouts 1,839–7,051; AIME 32 vs 38; Merge IFBench 28.23 | confirmed | 2507.19457 Table 1 |
+| GEPA GPT-4.1-mini 65.22 / +Merge 66.36 / TextGrad 59.14 / MIPROv2 58.67; Qwen-Opt +9.00 | confirmed | 2507.19457 Table 2 |
+| Pareto +12.44 vs greedy +6.05 vs beam +5.11 | confirmed; clarified that it covers 4 tasks only | 2507.19457 Table 3 |
+| ACE +10.6% AppWorld; +11.9% over GEPA offline; +14.8% without GT labels | confirmed (the 11.9% is the with-labels ACE) | 2510.04618 Table 1, §4.3 |
+| ACE finance 81.9 vs GEPA 72.5; FiNER online without labels −3.4; latency −86.9% | confirmed | 2510.04618 Table 2, §1/§4.7 |
+| DC collapse 18,282→122 tokens, 66.7→57.1 vs 63.7 | confirmed | 2510.04618 §2.2 |
+| ReasoningBank +8.3/+7.2/+4.6; MaTTS (k=5) 51.8/56.3/48.8; SWE-Bench 34.2→38.8, 54.0→57.4 | confirmed | 2509.25140 Tables 1–2 |
+| ReasoningBank failures 46.5→49.7 vs AWM 44.4→42.2 (was ◐) | confirmed, upgraded to ✓ (WebArena-Shopping, Gemini-2.5-flash) | 2509.25140 §5 ablation text, Fig. 7 |
+| ReasoningBank affiliation "Google Cloud AI"; LLM judge "App. E" | corrected to UIUC + Google Cloud AI Research; judge cited at §3 | 2509.25140 title page, §3 |
+| RSI Tax: SRN 2,048 tokens; 65.6/71.0/68.2% savings; +4.7 pp for +3.6% tokens; best in 3/4, tie in 4th; ReasoningBank 40.0 vs 43.8 and 69.7 vs 69.7 | confirmed | 2611.13524 abstract, Table 2, §5.1, App. B.3 |
+| RSI Tax: verification 74.8–93.6%; EvoSkill 497.45M vs 182.26M; 63.57% unused; one ordering, no repeats; PKU, 10 Nov 2026 | confirmed | 2611.13524 §5.2, Limitations, title page |
+| Anti-Persistence: 54.7 vs 42.7/41.6/46.7/7.2; discard +28.0/+12.3/+3.3/+6.7; Qwen SciWorld 43.8 vs 34.0; 3 seeds, K=10 | confirmed; added that it is not best on Gemma ScienceWorld/ALFWorld | 2610.27406 Tables 1–2, §4 |
+| Useful Memories: GPT-5.4 "fails 54%" of a 19-problem ARC slice | corrected: accuracy falls 100%→54% (fails 46%). The abstract's wording conflicts with §1/§4 | 2605.12978 §1 l.114–116, §4 l.422–424, Table 2 |
+| Useful Memories setup: "main model GPT-5.4"; consolidators list | corrected/expanded: GPT-5.4, GPT-5.4-mini, Claude Sonnet 5; seven frameworks incl. ProPlay | 2605.12978 §4.3 |
+| Useful Memories: episodic-only competitive; auto regime doubles forced consolidation | confirmed | 2605.12978 abstract, §1 |
+| SkillOpt 52/52; GPT-5.5 58.8→82.3 (+23.5); +5.4 over best baseline; SpreadsheetBench 41.8→80.7; Codex→Claude Code +59.7 | confirmed (averages recomputed from §1 per-benchmark numbers) | 2605.23904 §1, Table 1 |
+| SkillOpt split 2:1:7, split_seed 42; verifier limitation | confirmed | 2605.23904 §4, App. (default split), App. B |
+| Skill∞ 60.7 vs 55.9 on 83 SkillsBench tasks; lower in 3/8 domains | confirmed | 2610.35434 Table 1 |
+| Skill∞ amortization ≈ 11 task-skill optimizations (was ◐) | confirmed, upgraded to ✓; added "<15% per optimization" | 2610.35434 §4.6 |
+| Skills Generalize: 21 → 5 full / 13 part / 3 none; hard-coded column names/files | confirmed | 2609.39148 abstract, §1, §4 |
+| Experience Rot 63% / 100% / 23%; copy-and-report-success; grows with experience; announcing barely helps | confirmed (affiliations also include U. Florida) | 2611.20922 abstract, §1, Fig. 1c |
+| Memento GAIA 87.88 Pass@3 / 79.40 test; +4.7–9.6 OOD; 85.44 vs 84.47; ~3k items saturate | confirmed | 2508.16153 abstract, Table 4, §5.5.3 |
+| MemRL 0.772 / 0.736 / 0.631; transfer 0.794 / 0.766 / 0.765 / 0.709; λ=0.5; Pass@10 CSR 0.743 | confirmed; critique sharpened (Pass@10 CSR vs MemRL CSR 0.798) | 2601.03192 Tables 1–2, Fig. 5 |
+| Lineage: 1,750 runs, 9 task families; +0.238 → +0.088 public | confirmed (7 primary + 2 public); added CI and banking77 driver | 2610.41157 abstract, §1, Table 4 text |
+| Self-Consolidation "compresses accumulated text experience" | corrected: it distils text experience into compact learnable parameters; moved to the consolidation-into-weights row | 2602.01966 arXiv abstract |
+| DCPS matches GEPA with 55% fewer rollouts, 32% lower cost | confirmed (◐); added that the comparison is on GPT-4.1-mini and that heavier mechanisms win some tasks | 2611.22605 arXiv abstract |
+| ESPO 74.67 vs 70.91; prompts 47% shorter; GEPA bloat up to 3× | confirmed (◐) | 2609.04197 arXiv abstract |
+| Do Agent Optimizers Compound: GEPA below baseline on new TB2 tasks | confirmed (◐); TB2.0; added RELAI-VCL 76.4% | 2607.14004 arXiv abstract |
+| FGSE WebArena 39.8, AppWorld 78.8 | confirmed (◐) | 2611.14326 arXiv abstract |
+| "first strong 'consolidation hurts' evidence" (Useful Memories) | unverifiable as a "first" claim; softened to "strong controlled" | n/a |
+| Dai/Ruan survey id and seven functions | confirmed as an alphaXiv-only slug with no arXiv id; 4 components × 7 functions | research/round2/verify/factcheck.md §3a |
+| Lineage "8/12 rounds" budget | unverifiable in this pass; marked † | not located in 2610.41157 text grep |
+| Reflector-See (+8.0, r=0.70), Continual Learners (r=−0.72) | confirmed (prior) | FULLTEXT_VERIFICATION.md |
+| ID resolution: 2602.01966, 2611.22605, 2609.04197 (+2607.14004, 2611.14326) | confirmed: titles match ("Self-Consolidation for Self-Evolving Agents"; "Simplicity Goes Far: Auditing Prompt Optimizers with Demonstration-Conditioned Prompt Search"; "ESPO: Error-Structured Prompt Optimization…") | arXiv API / abs pages, 2026-11-19 |
